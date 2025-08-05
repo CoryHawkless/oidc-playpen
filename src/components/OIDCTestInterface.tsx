@@ -173,9 +173,23 @@ const OIDCTestInterface: React.FC = () => {
         duration: Date.now() - startTime
       });
       
+      // Auto-populate manual config with likely endpoints
+      const baseUrl = config.baseUrl.replace(/\/$/, '');
+      setConfig(prev => ({
+        ...prev,
+        useManualConfig: true,
+        manualConfig: {
+          authorizationEndpoint: `${baseUrl}/oauth/authorize`,
+          tokenEndpoint: `${baseUrl}/oauth/token`,
+          userinfoEndpoint: `${baseUrl}/oauth/userinfo`,
+          jwksUri: `${baseUrl}/.well-known/jwks.json`,
+          issuer: baseUrl
+        }
+      }));
+      
       toast({
-        title: "Error",
-        description: `Failed to fetch discovery document: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Auto-discovery failed",
+        description: `CORS error detected. Manual config auto-populated with standard endpoints.`,
         variant: "destructive"
       });
     } finally {

@@ -73,7 +73,7 @@ const OIDCTestInterface: React.FC = () => {
   const { toast } = useToast();
   const [discovery, setDiscovery] = useState<DiscoveryDocument | null>(null);
   const [config, setConfig] = useState<OIDCConfig>({
-    baseUrl: '',
+    baseUrl: 'https://oidctest.wsweet.org/',
     clientId: '',
     clientSecret: '',
     redirectUri: `${window.location.origin}/redirect.html`,

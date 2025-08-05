@@ -282,9 +282,13 @@ const OIDCTestInterface: React.FC = () => {
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: config.redirectUri,
-      client_id: config.clientId
+      redirect_uri: config.redirectUri
     });
+
+    // Only include client_id in body for public clients (no client secret)
+    if (!config.clientSecret) {
+      body.append('client_id', config.clientId);
+    }
 
     // Only use PKCE for public clients (no client secret)
     if (!config.clientSecret) {

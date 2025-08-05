@@ -43,6 +43,14 @@ interface OIDCConfig {
   redirectUri: string;
   scopes: string[];
   flowType: 'authorization_code' | 'implicit' | 'hybrid' | 'client_credentials';
+  manualConfig: {
+    authorizationEndpoint: string;
+    tokenEndpoint: string;
+    userinfoEndpoint: string;
+    jwksUri: string;
+    issuer: string;
+  };
+  useManualConfig: boolean;
 }
 
 interface RequestLog {
@@ -78,7 +86,15 @@ const OIDCTestInterface: React.FC = () => {
     clientSecret: '',
     redirectUri: `${window.location.origin}/redirect.html`,
     scopes: ['openid', 'profile', 'email'],
-    flowType: 'authorization_code'
+    flowType: 'authorization_code',
+    manualConfig: {
+      authorizationEndpoint: '',
+      tokenEndpoint: '',
+      userinfoEndpoint: '',
+      jwksUri: '',
+      issuer: ''
+    },
+    useManualConfig: false
   });
   const [tokens, setTokens] = useState<TokenResponse | null>(null);
   const [requestLogs, setRequestLogs] = useState<RequestLog[]>([]);
@@ -168,10 +184,22 @@ const OIDCTestInterface: React.FC = () => {
   };
 
   const generateAuthUrl = useCallback(async () => {
-    if (!discovery || !config.clientId) {
+    const effectiveDiscovery = config.useManualConfig 
+      ? {
+          authorization_endpoint: config.manualConfig.authorizationEndpoint,
+          token_endpoint: config.manualConfig.tokenEndpoint,
+          userinfo_endpoint: config.manualConfig.userinfoEndpoint,
+          jwks_uri: config.manualConfig.jwksUri,
+          issuer: config.manualConfig.issuer
+        }
+      : discovery;
+
+    if (!effectiveDiscovery || !config.clientId) {
       toast({
         title: "Error",
-        description: "Please fetch discovery document and enter client ID first",
+        description: config.useManualConfig 
+          ? "Please fill in manual configuration and enter client ID first"
+          : "Please fetch discovery document and enter client ID first",
         variant: "destructive"
       });
       return;
@@ -199,7 +227,7 @@ const OIDCTestInterface: React.FC = () => {
     sessionStorage.setItem('oidc_state', params.get('state')!);
     sessionStorage.setItem('oidc_nonce', params.get('nonce')!);
 
-    const url = `${discovery.authorization_endpoint}?${params.toString()}`;
+    const url = `${effectiveDiscovery.authorization_endpoint}?${params.toString()}`;
     setAuthUrl(url);
     return url;
   }, [discovery, config]);
@@ -275,7 +303,17 @@ const OIDCTestInterface: React.FC = () => {
   };
 
   const exchangeCodeForTokens = async (code: string) => {
-    if (!discovery?.token_endpoint) return;
+    const effectiveDiscovery = config.useManualConfig 
+      ? {
+          authorization_endpoint: config.manualConfig.authorizationEndpoint,
+          token_endpoint: config.manualConfig.tokenEndpoint,
+          userinfo_endpoint: config.manualConfig.userinfoEndpoint,
+          jwks_uri: config.manualConfig.jwksUri,
+          issuer: config.manualConfig.issuer
+        }
+      : discovery;
+
+    if (!effectiveDiscovery?.token_endpoint) return;
 
     setLoading(prev => ({ ...prev, token: true }));
     
@@ -308,7 +346,7 @@ const OIDCTestInterface: React.FC = () => {
 
     const logId = addRequestLog({
       method: 'POST',
-      url: discovery.token_endpoint,
+      url: effectiveDiscovery.token_endpoint,
       headers,
       body: body.toString()
     });
@@ -316,7 +354,7 @@ const OIDCTestInterface: React.FC = () => {
     const startTime = Date.now();
 
     try {
-      const response = await fetch(discovery.token_endpoint, {
+      const response = await fetch(effectiveDiscovery.token_endpoint, {
         method: 'POST',
         headers,
         body
@@ -498,11 +536,95 @@ const OIDCTestInterface: React.FC = () => {
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                   </div>
+                 )}
+
+                 {/* Manual Configuration Toggle */}
+                 <div className="space-y-4 pt-6 border-t border-border">
+                   <div className="flex items-center space-x-2">
+                     <input
+                       type="checkbox"
+                       id="useManualConfig"
+                       checked={config.useManualConfig}
+                       onChange={(e) => setConfig(prev => ({ ...prev, useManualConfig: e.target.checked }))}
+                       className="rounded"
+                     />
+                     <Label htmlFor="useManualConfig" className="text-sm font-medium">
+                       Use Manual Configuration (bypass CORS)
+                     </Label>
+                   </div>
+
+                   {config.useManualConfig && (
+                     <div className="space-y-4 bg-muted/50 p-4 rounded-lg">
+                       <h4 className="font-semibold text-sm">Manual OIDC Endpoints</h4>
+                       <div className="grid grid-cols-1 gap-4">
+                         <div className="space-y-2">
+                           <Label htmlFor="issuer">Issuer</Label>
+                           <Input
+                             id="issuer"
+                             placeholder="https://auth.hawkvelt.id.au/application/o/flask2"
+                             value={config.manualConfig.issuer}
+                             onChange={(e) => setConfig(prev => ({
+                               ...prev,
+                               manualConfig: { ...prev.manualConfig, issuer: e.target.value }
+                             }))}
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="authEndpoint">Authorization Endpoint</Label>
+                           <Input
+                             id="authEndpoint"
+                             placeholder="https://auth.hawkvelt.id.au/application/o/flask2/authorize"
+                             value={config.manualConfig.authorizationEndpoint}
+                             onChange={(e) => setConfig(prev => ({
+                               ...prev,
+                               manualConfig: { ...prev.manualConfig, authorizationEndpoint: e.target.value }
+                             }))}
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="tokenEndpoint">Token Endpoint</Label>
+                           <Input
+                             id="tokenEndpoint"
+                             placeholder="https://auth.hawkvelt.id.au/application/o/flask2/token"
+                             value={config.manualConfig.tokenEndpoint}
+                             onChange={(e) => setConfig(prev => ({
+                               ...prev,
+                               manualConfig: { ...prev.manualConfig, tokenEndpoint: e.target.value }
+                             }))}
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="userinfoEndpoint">Userinfo Endpoint</Label>
+                           <Input
+                             id="userinfoEndpoint"
+                             placeholder="https://auth.hawkvelt.id.au/application/o/flask2/userinfo"
+                             value={config.manualConfig.userinfoEndpoint}
+                             onChange={(e) => setConfig(prev => ({
+                               ...prev,
+                               manualConfig: { ...prev.manualConfig, userinfoEndpoint: e.target.value }
+                             }))}
+                           />
+                         </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="jwksUri">JWKS URI</Label>
+                           <Input
+                             id="jwksUri"
+                             placeholder="https://auth.hawkvelt.id.au/application/o/flask2/jwks"
+                             value={config.manualConfig.jwksUri}
+                             onChange={(e) => setConfig(prev => ({
+                               ...prev,
+                               manualConfig: { ...prev.manualConfig, jwksUri: e.target.value }
+                             }))}
+                           />
+                         </div>
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               </CardContent>
+             </Card>
+           </TabsContent>
 
           {/* Client Config Tab */}
           <TabsContent value="config">
@@ -625,11 +747,11 @@ const OIDCTestInterface: React.FC = () => {
                   <Button onClick={generateAuthUrl} variant="outline">
                     Generate URL
                   </Button>
-                  <Button 
-                    onClick={beginFlow}
-                    disabled={!discovery || !config.clientId}
-                    className="flex-1"
-                  >
+                   <Button 
+                     onClick={beginFlow}
+                     disabled={(!discovery && !config.useManualConfig) || !config.clientId}
+                     className="flex-1"
+                   >
                     <Play className="h-4 w-4 mr-2" />
                     Begin Flow
                   </Button>

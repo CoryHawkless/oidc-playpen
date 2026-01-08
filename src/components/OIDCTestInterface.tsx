@@ -383,6 +383,29 @@ const OIDCTestInterface: React.FC = () => {
       });
 
       if (response.ok) {
+        // Validate nonce in id_token if present (OIDC best practice)
+        if (responseData.id_token) {
+          const storedNonce = sessionStorage.getItem('oidc_nonce');
+          if (storedNonce) {
+            try {
+              const payload = JSON.parse(atob(responseData.id_token.split('.')[1]));
+              if (payload.nonce && payload.nonce !== storedNonce) {
+                throw new Error('Nonce mismatch in ID token - possible replay attack');
+              }
+            } catch (e) {
+              if (e instanceof Error && e.message.includes('Nonce mismatch')) {
+                throw e;
+              }
+              // Ignore parsing errors for non-JWT tokens
+            }
+          }
+        }
+        
+        // Clear sensitive session data after successful exchange (OIDC best practice)
+        sessionStorage.removeItem('code_verifier');
+        sessionStorage.removeItem('oidc_state');
+        sessionStorage.removeItem('oidc_nonce');
+        
         setTokens(responseData);
         toast({
           title: "Success",
@@ -695,12 +718,17 @@ const OIDCTestInterface: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="authorization_code">Authorization Code + PKCE</SelectItem>
-                      <SelectItem value="implicit">Implicit Flow</SelectItem>
+                      <SelectItem value="authorization_code">Authorization Code + PKCE (Recommended)</SelectItem>
+                      <SelectItem value="implicit">Implicit Flow (Deprecated - RFC 9700)</SelectItem>
                       <SelectItem value="hybrid">Hybrid Flow</SelectItem>
                       <SelectItem value="client_credentials">Client Credentials</SelectItem>
                     </SelectContent>
                   </Select>
+                  {config.flowType === 'implicit' && (
+                    <p className="text-xs text-destructive mt-1">
+                      ⚠️ Implicit flow is deprecated per RFC 9700. Use Authorization Code + PKCE instead.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

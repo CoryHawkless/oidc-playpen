@@ -61,9 +61,15 @@
                     allParams[key] = value;
                 }
 
-                // Validate state parameter if present
+                // Validate state parameter (REQUIRED for CSRF protection per RFC 9700)
                 const storedState = sessionStorage.getItem('oidc_state');
-                if (allParams.state && storedState && allParams.state !== storedState) {
+                if (!storedState) {
+                    throw new Error('No stored state found - session may have expired');
+                }
+                if (!allParams.state) {
+                    throw new Error('No state parameter in response - possible attack');
+                }
+                if (allParams.state !== storedState) {
                     throw new Error('State parameter mismatch - possible CSRF attack');
                 }
 

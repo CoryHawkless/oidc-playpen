@@ -342,12 +342,10 @@ const OIDCTestInterface: React.FC = () => {
       body.append('client_id', config.clientId);
     }
 
-    // Only use PKCE for public clients (no client secret)
-    if (!config.clientSecret) {
-      const codeVerifier = sessionStorage.getItem('code_verifier');
-      if (codeVerifier) {
-        body.append('code_verifier', codeVerifier);
-      }
+    // Always include code_verifier for PKCE
+    const codeVerifier = sessionStorage.getItem('code_verifier');
+    if (codeVerifier) {
+      body.append('code_verifier', codeVerifier);
     }
 
     const headers: Record<string, string> = {

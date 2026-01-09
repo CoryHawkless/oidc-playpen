@@ -827,19 +827,31 @@ const OIDCTestInterface: React.FC = () => {
                           </Button>
                         </div>
                         <pre className="text-xs bg-code-bg p-3 rounded border border-code-border overflow-x-auto">
-                          {typeof value === 'string' && value.includes('.') ? 
-                            // JWT token - decode and display
-                            JSON.stringify(
-                              {
-                                header: JSON.parse(atob(value.split('.')[0])),
-                                payload: JSON.parse(atob(value.split('.')[1])),
-                                signature: value.split('.')[2]
-                              }, 
-                              null, 
-                              2
-                            ) : 
-                            String(value)
-                          }
+                          {(() => {
+                            if (typeof value === 'string' && value.split('.').length === 3) {
+                              try {
+                                // Decode base64url to base64, then decode
+                                const decodeBase64Url = (str: string) => {
+                                  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+                                  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+                                  return atob(padded);
+                                };
+                                const parts = value.split('.');
+                                return JSON.stringify(
+                                  {
+                                    header: JSON.parse(decodeBase64Url(parts[0])),
+                                    payload: JSON.parse(decodeBase64Url(parts[1])),
+                                    signature: parts[2]
+                                  },
+                                  null,
+                                  2
+                                );
+                              } catch {
+                                return String(value);
+                              }
+                            }
+                            return String(value);
+                          })()}
                         </pre>
                       </div>
                     ))}

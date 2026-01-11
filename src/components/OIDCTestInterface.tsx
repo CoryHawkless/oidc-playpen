@@ -315,12 +315,15 @@ const OIDCTestInterface: React.FC = () => {
       // Padding
       const msgLen = message.length;
       const bitLen = msgLen * 8;
-      const padLen = ((msgLen + 8) % 64 < 56) ? 56 - (msgLen + 8) % 64 : 120 - (msgLen + 8) % 64;
-      const padded = new Uint8Array(msgLen + 1 + padLen + 8);
+      // Calculate padded length: must be multiple of 64 bytes, with room for 1 byte (0x80) + 8 bytes (length)
+      const paddedLen = Math.ceil((msgLen + 9) / 64) * 64;
+      const padded = new Uint8Array(paddedLen);
       padded.set(message);
       padded[msgLen] = 0x80;
+      // Store bit length as 64-bit big-endian at the end
       const view = new DataView(padded.buffer);
-      view.setUint32(padded.length - 4, bitLen, false);
+      view.setUint32(paddedLen - 8, 0, false); // High 32 bits (0 for messages < 512MB)
+      view.setUint32(paddedLen - 4, bitLen, false); // Low 32 bits
       
       // Process blocks
       const W = new Uint32Array(64);

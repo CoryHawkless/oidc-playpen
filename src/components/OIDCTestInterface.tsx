@@ -233,16 +233,18 @@ const OIDCTestInterface: React.FC = () => {
       return;
     }
 
+    const state = generateId();
+    const nonce = generateId();
+
     const params = new URLSearchParams({
       response_type: config.flowType === 'authorization_code' ? 'code' : 
                     config.flowType === 'implicit' ? 'id_token token' : 'code id_token token',
       client_id: config.clientId,
       redirect_uri: config.redirectUri,
       scope: config.scopes.join(' '),
-      state: crypto.randomUUID(),
-      nonce: crypto.randomUUID()
+      state,
+      nonce
     });
-
     // Add PKCE for authorization code flow
     if (config.flowType === 'authorization_code') {
       const codeVerifier = generateCodeVerifier();
@@ -258,7 +260,7 @@ const OIDCTestInterface: React.FC = () => {
     const url = `${effectiveDiscovery.authorization_endpoint}?${params.toString()}`;
     setAuthUrl(url);
     return url;
-  }, [discovery, config]);
+  }, [discovery, config, generateId]);
 
   const generateCodeVerifier = () => {
     const array = new Uint8Array(32);

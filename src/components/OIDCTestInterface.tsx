@@ -103,15 +103,29 @@ const OIDCTestInterface: React.FC = () => {
   const [authUrl, setAuthUrl] = useState('');
   const popupRef = useRef<Window | null>(null);
 
+  // Fallback for crypto.randomUUID (not available in non-secure contexts)
+  const generateId = useCallback(() => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback using crypto.getRandomValues
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    array[6] = (array[6] & 0x0f) | 0x40; // Version 4
+    array[8] = (array[8] & 0x3f) | 0x80; // Variant 10
+    const hex = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }, []);
+
   const addRequestLog = useCallback((log: Omit<RequestLog, 'id' | 'timestamp'>) => {
     const newLog: RequestLog = {
       ...log,
-      id: crypto.randomUUID(),
+      id: generateId(),
       timestamp: new Date()
     };
     setRequestLogs(prev => [newLog, ...prev]);
     return newLog.id;
-  }, []);
+  }, [generateId]);
 
   const updateRequestLog = useCallback((id: string, response: RequestLog['response']) => {
     setRequestLogs(prev => prev.map(log => 

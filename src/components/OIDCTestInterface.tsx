@@ -80,6 +80,7 @@ interface TokenResponse {
 const OIDCTestInterface: React.FC = () => {
   const { toast } = useToast();
   const [discovery, setDiscovery] = useState<DiscoveryDocument | null>(null);
+  const [userInfo, setUserInfo] = useState<Record<string, any> | null>(null);
   const [config, setConfig] = useState<OIDCConfig>({
     baseUrl: 'https://oidctest.wsweet.org/',
     clientId: '',
@@ -538,11 +539,90 @@ const OIDCTestInterface: React.FC = () => {
     });
   };
 
+  const fetchUserInfo = async () => {
+    if (!tokens?.access_token) {
+      toast({
+        title: "Error",
+        description: "No access token available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const userinfoEndpoint = config.useManualConfig 
+      ? config.manualConfig.userinfoEndpoint 
+      : discovery?.userinfo_endpoint;
+
+    if (!userinfoEndpoint) {
+      toast({
+        title: "Error",
+        description: "No userinfo endpoint available",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, userinfo: true }));
+    
+    const logId = addRequestLog({
+      method: 'GET',
+      url: userinfoEndpoint,
+      headers: {
+        'Authorization': `Bearer ${tokens.access_token}`
+      }
+    });
+
+    const startTime = Date.now();
+
+    try {
+      const response = await fetch(userinfoEndpoint, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${tokens.access_token}`
+        }
+      });
+
+      const responseText = await response.text();
+      const duration = Date.now() - startTime;
+      
+      updateRequestLog(logId, {
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: responseText,
+        duration
+      });
+
+      if (response.ok) {
+        const userInfoData = JSON.parse(responseText);
+        setUserInfo(userInfoData);
+        toast({
+          title: "Success",
+          description: "UserInfo retrieved successfully"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `UserInfo request failed: ${response.status}`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to fetch userinfo: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(prev => ({ ...prev, userinfo: false }));
+    }
+  };
+
   const exportConfig = () => {
     const exportData = {
       config,
       discovery,
       tokens,
+      userInfo,
       requestLogs,
       timestamp: new Date().toISOString()
     };
@@ -908,51 +988,82 @@ const OIDCTestInterface: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {tokens ? (
-                  <div className="space-y-4">
-                    {Object.entries(tokens).map(([key, value]) => (
-                      <div key={key} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium capitalize">
-                            {key.replace(/_/g, ' ')}
-                          </Label>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => copyToClipboard(String(value))}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <pre className="text-xs bg-code-bg p-3 rounded border border-code-border overflow-x-auto">
-                          {(() => {
-                            if (typeof value === 'string' && value.split('.').length === 3) {
-                              try {
-                                // Decode base64url to base64, then decode
-                                const decodeBase64Url = (str: string) => {
-                                  const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-                                  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
-                                  return atob(padded);
-                                };
-                                const parts = value.split('.');
-                                return JSON.stringify(
-                                  {
-                                    header: JSON.parse(decodeBase64Url(parts[0])),
-                                    payload: JSON.parse(decodeBase64Url(parts[1])),
-                                    signature: parts[2]
-                                  },
-                                  null,
-                                  2
-                                );
-                              } catch {
-                                return String(value);
+              {tokens ? (
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      {Object.entries(tokens).map(([key, value]) => (
+                        <div key={key} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium capitalize">
+                              {key.replace(/_/g, ' ')}
+                            </Label>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => copyToClipboard(String(value))}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <pre className="text-xs bg-code-bg p-3 rounded border border-code-border overflow-x-auto">
+                            {(() => {
+                              if (typeof value === 'string' && value.split('.').length === 3) {
+                                try {
+                                  // Decode base64url to base64, then decode
+                                  const decodeBase64Url = (str: string) => {
+                                    const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+                                    const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+                                    return atob(padded);
+                                  };
+                                  const parts = value.split('.');
+                                  return JSON.stringify(
+                                    {
+                                      header: JSON.parse(decodeBase64Url(parts[0])),
+                                      payload: JSON.parse(decodeBase64Url(parts[1])),
+                                      signature: parts[2]
+                                    },
+                                    null,
+                                    2
+                                  );
+                                } catch {
+                                  return String(value);
+                                }
                               }
-                            }
-                            return String(value);
-                          })()}
-                        </pre>
+                              return String(value);
+                            })()}
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* UserInfo Section */}
+                    <div className="border-t border-border pt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Label className="text-sm font-medium">UserInfo Endpoint</Label>
+                        <Button 
+                          onClick={fetchUserInfo}
+                          disabled={loading.userinfo || !tokens.access_token}
+                          size="sm"
+                        >
+                          {loading.userinfo ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <Globe className="h-4 w-4 mr-2" />
+                          )}
+                          Fetch UserInfo
+                        </Button>
                       </div>
-                    ))}
+                      
+                      {userInfo ? (
+                        <pre className="text-xs bg-code-bg p-3 rounded border border-code-border overflow-x-auto">
+                          {JSON.stringify(userInfo, null, 2)}
+                        </pre>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">
+                          Click "Fetch UserInfo" to query the userinfo endpoint with the access token.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">

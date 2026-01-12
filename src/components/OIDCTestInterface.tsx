@@ -1091,14 +1091,14 @@ const OIDCTestInterface: React.FC = () => {
             </Card>
           </TabsContent>
 
-          {/* Request Logs Tab */}
+          {/* Logs Tab */}
           <TabsContent value="logs">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
-                    Request Logs
+                    Logs
                   </div>
                   <Button onClick={exportConfig} variant="outline" size="sm">
                     <Download className="h-4 w-4 mr-2" />
@@ -1109,40 +1109,53 @@ const OIDCTestInterface: React.FC = () => {
               <CardContent>
                 {requestLogs.length > 0 ? (
                   <div className="space-y-4">
-                    {requestLogs.map((log) => (
-                      <div key={log.id} className="border border-border rounded p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={log.response?.status && log.response.status < 400 ? "default" : "destructive"}>
-                              {log.method}
-                            </Badge>
-                            <span className="font-mono text-sm">{log.url}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {log.response?.status && (
-                              <Badge variant={log.response.status < 400 ? "default" : "destructive"}>
-                                {log.response.status}
+                    {[...requestLogs].reverse().map((log) => {
+                      const isRedirect = log.method === 'REDIRECT';
+                      return (
+                        <div 
+                          key={log.id} 
+                          className={`border rounded p-4 space-y-2 ${
+                            isRedirect 
+                              ? 'border-amber-500/50 bg-amber-500/5' 
+                              : 'border-border'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={log.response?.status && log.response.status < 400 ? "default" : "destructive"}
+                                className={isRedirect ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                              >
+                                {log.method}
                               </Badge>
-                            )}
-                            {log.response?.duration && (
-                              <span>{log.response.duration}ms</span>
-                            )}
-                            <span>{log.timestamp.toLocaleTimeString()}</span>
+                              <span className="font-mono text-sm truncate max-w-md">{log.url}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              {log.response?.status && (
+                                <Badge variant={log.response.status < 400 ? "default" : "destructive"}>
+                                  {log.response.status}
+                                </Badge>
+                              )}
+                              {log.response?.duration !== undefined && log.response.duration > 0 && (
+                                <span>{log.response.duration}ms</span>
+                              )}
+                              <span>{log.timestamp.toLocaleTimeString()}</span>
+                            </div>
                           </div>
+                          
+                          {log.response && (
+                            <details className="text-sm">
+                              <summary className="cursor-pointer text-muted-foreground">
+                                {isRedirect ? 'Callback Data' : 'Response Details'}
+                              </summary>
+                              <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
+                                {log.response.body}
+                              </pre>
+                            </details>
+                          )}
                         </div>
-                        
-                        {log.response && (
-                          <details className="text-sm">
-                            <summary className="cursor-pointer text-muted-foreground">
-                              Response Details
-                            </summary>
-                            <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
-                              {log.response.body}
-                            </pre>
-                          </details>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">

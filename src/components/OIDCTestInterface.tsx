@@ -1142,11 +1142,50 @@ const OIDCTestInterface: React.FC = () => {
                               <span>{log.timestamp.toLocaleTimeString()}</span>
                             </div>
                           </div>
-                          
+
+                          {/* Full Request URL */}
+                          <details className="text-sm">
+                            <summary className="cursor-pointer text-muted-foreground">Request URL</summary>
+                            <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs break-all whitespace-pre-wrap">
+                              {log.url}
+                            </pre>
+                          </details>
+
+                          {/* Request Headers */}
+                          {Object.keys(log.headers).length > 0 && (
+                            <details className="text-sm">
+                              <summary className="cursor-pointer text-muted-foreground">Request Headers</summary>
+                              <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
+                                {JSON.stringify(log.headers, null, 2)}
+                              </pre>
+                            </details>
+                          )}
+
+                          {/* Request Body/Payload */}
+                          {log.body && (
+                            <details className="text-sm">
+                              <summary className="cursor-pointer text-muted-foreground">Request Payload</summary>
+                              <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
+                                {log.body}
+                              </pre>
+                            </details>
+                          )}
+
+                          {/* Response Headers */}
+                          {log.response && Object.keys(log.response.headers).length > 0 && (
+                            <details className="text-sm">
+                              <summary className="cursor-pointer text-muted-foreground">Response Headers</summary>
+                              <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
+                                {JSON.stringify(log.response.headers, null, 2)}
+                              </pre>
+                            </details>
+                          )}
+
+                          {/* Response Body */}
                           {log.response && (
                             <details className="text-sm">
                               <summary className="cursor-pointer text-muted-foreground">
-                                {isRedirect ? 'Callback Data' : 'Response Details'}
+                                {isRedirect ? 'Callback Data' : 'Response Body'}
                               </summary>
                               <pre className="mt-2 bg-code-bg p-3 rounded border border-code-border overflow-x-auto text-xs">
                                 {log.response.body}

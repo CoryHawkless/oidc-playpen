@@ -1109,7 +1109,7 @@ const OIDCTestInterface: React.FC = () => {
               <CardContent>
                 {requestLogs.length > 0 ? (
                   <div className="space-y-4">
-                    {[...requestLogs].reverse().map((log) => {
+                    {[...requestLogs].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()).map((log) => {
                       const isRedirect = log.method === 'REDIRECT';
                       return (
                         <div 

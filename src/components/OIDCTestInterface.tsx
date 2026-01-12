@@ -385,6 +385,23 @@ const OIDCTestInterface: React.FC = () => {
       if (type === 'OIDC_CALLBACK') {
         window.removeEventListener('message', handleMessage);
         popup?.close();
+
+        // Log the redirect callback response
+        const redirectLogId = generateId();
+        setRequestLogs(prev => [...prev, {
+          id: redirectLogId,
+          timestamp: new Date(),
+          method: 'REDIRECT',
+          url: config.redirectUri,
+          headers: {},
+          body: 'Authorization callback received',
+          response: {
+            status: data.error ? 400 : 200,
+            headers: {},
+            body: JSON.stringify(data, null, 2),
+            duration: 0
+          }
+        }]);
         
         if (data.error) {
           toast({

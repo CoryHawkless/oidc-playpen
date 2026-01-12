@@ -102,6 +102,7 @@ const OIDCTestInterface: React.FC = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [showSecret, setShowSecret] = useState(false);
   const [authUrl, setAuthUrl] = useState('');
+  const [lastAuthCode, setLastAuthCode] = useState<string | null>(null);
   const popupRef = useRef<Window | null>(null);
 
   // Fallback for crypto.randomUUID (not available in non-secure contexts)
@@ -410,6 +411,7 @@ const OIDCTestInterface: React.FC = () => {
             variant: "destructive"
           });
         } else if (data.code) {
+          setLastAuthCode(data.code);
           exchangeCodeForTokens(data.code);
         } else if (data.access_token || data.id_token) {
           setTokens(data);
@@ -999,9 +1001,26 @@ const OIDCTestInterface: React.FC = () => {
           <TabsContent value="tokens">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Token Display
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Token Display
+                  </div>
+                  {lastAuthCode && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => exchangeCodeForTokens(lastAuthCode)}
+                      disabled={loading.token}
+                    >
+                      {loading.token ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      Re-exchange Code
+                    </Button>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>

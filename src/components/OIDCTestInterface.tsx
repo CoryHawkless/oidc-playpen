@@ -661,13 +661,19 @@ const OIDCTestInterface: React.FC = () => {
         {/* Header */}
         <div className="text-center py-8 relative">
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-glow-pulse" />
+            <div className="w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary via-primary-glow to-primary bg-[length:200%_100%] bg-clip-text text-transparent animate-float relative">
-            OIDC Test Interface
-          </h1>
-          <p className="text-lg text-muted-foreground relative">
-            Browser-based OpenID Connect provider testing tool
+          <div className="relative inline-flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-glow-primary">
+              <Shield className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <h1 className="text-3xl font-mono font-bold tracking-tight">
+              <span className="text-foreground">oidc</span>
+              <span className="text-primary">test</span>
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground relative tracking-wide uppercase">
+            OpenID Connect Provider Testing Tool
           </p>
         </div>
 

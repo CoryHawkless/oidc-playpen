@@ -64,12 +64,18 @@
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
     --gradient-card: linear-gradient(145deg, hsl(224 71% 4%), hsl(215 27.9% 16.9%));
 
-    /* Shadows */
+    /* Shadows & Glows */
     --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.3);
     --shadow-card: 0 4px 6px -1px hsl(222 84% 4.9% / 0.1), 0 2px 4px -1px hsl(222 84% 4.9% / 0.06);
+    --glow-primary: 0 0 25px hsl(217 91% 60% / 0.4);
+    --glow-success: 0 0 20px hsl(142 76% 36% / 0.35);
+    --glow-warning: 0 0 20px hsl(38 92% 50% / 0.35);
+    --glow-error: 0 0 20px hsl(0 63% 31% / 0.35);
+    --shadow-elevated: 0 10px 40px -10px hsl(222 84% 4.9% / 0.5), 0 4px 12px -2px hsl(217 91% 60% / 0.1);
 
     /* Animation */
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     --radius: 0.5rem;
 
@@ -136,5 +142,137 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Card hover effects */
+  .card-glow {
+    @apply transition-all duration-300;
+    box-shadow: var(--shadow-card);
+  }
+  
+  .card-glow:hover {
+    box-shadow: var(--shadow-elevated);
+    border-color: hsl(var(--primary) / 0.3);
+    transform: translateY(-2px);
+  }
+
+  /* Primary button glow */
+  .btn-glow {
+    @apply transition-all duration-200;
+  }
+  
+  .btn-glow:hover:not(:disabled) {
+    box-shadow: var(--glow-primary);
+    transform: translateY(-1px);
+  }
+
+  /* Status glows for log entries */
+  .log-success {
+    @apply border-l-4 transition-all duration-200;
+    border-left-color: hsl(var(--success));
+  }
+  
+  .log-success:hover {
+    box-shadow: var(--glow-success);
+  }
+
+  .log-warning {
+    @apply border-l-4 transition-all duration-200;
+    border-left-color: hsl(var(--warning));
+  }
+  
+  .log-warning:hover {
+    box-shadow: var(--glow-warning);
+  }
+
+  .log-error {
+    @apply border-l-4 transition-all duration-200;
+    border-left-color: hsl(var(--destructive));
+  }
+  
+  .log-error:hover {
+    box-shadow: var(--glow-error);
+  }
+
+  /* Code block enhancement */
+  .code-block {
+    @apply relative transition-all duration-200;
+    background: linear-gradient(135deg, hsl(var(--code-bg)), hsl(var(--muted)));
+  }
+  
+  .code-block:hover {
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Badge glow effects */
+  .badge-glow {
+    @apply transition-all duration-200;
+  }
+  
+  .badge-glow:hover {
+    transform: scale(1.05);
+  }
+
+  /* Tab active glow */
+  .tab-glow[data-state="active"] {
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.3);
+  }
+
+  /* Input focus enhancement */
+  .input-glow:focus-within {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15), var(--glow-primary);
+  }
+
+  /* Shimmer animation for headers */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary-glow)) 50%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  /* Floating animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Pulse glow animation */
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: 200% center;
+  }
+  50% {
+    background-position: 0% center;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px hsl(var(--primary) / 0.4);
   }
 }

@@ -659,21 +659,24 @@ const OIDCTestInterface: React.FC = () => {
     <div className="min-h-screen bg-background text-foreground p-4">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center py-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+        <div className="text-center py-8 relative">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-64 h-64 bg-primary/5 rounded-full blur-3xl animate-glow-pulse" />
+          </div>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary via-primary-glow to-primary bg-[length:200%_100%] bg-clip-text text-transparent animate-float relative">
             OIDC Test Interface
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-muted-foreground relative">
             Browser-based OpenID Connect provider testing tool
           </p>
         </div>
 
         <Tabs defaultValue="setup" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="setup">Provider Setup</TabsTrigger>
-            <TabsTrigger value="config">Client Config</TabsTrigger>
-            <TabsTrigger value="tokens">Tokens</TabsTrigger>
-            <TabsTrigger value="logs">Request Logs</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-muted/50 backdrop-blur-sm border border-border/50 p-1 shadow-lg">
+            <TabsTrigger value="setup" className="data-[state=active]:shadow-glow-primary data-[state=active]:bg-primary/10 transition-all duration-200">Provider Setup</TabsTrigger>
+            <TabsTrigger value="config" className="data-[state=active]:shadow-glow-primary data-[state=active]:bg-primary/10 transition-all duration-200">Client Config</TabsTrigger>
+            <TabsTrigger value="tokens" className="data-[state=active]:shadow-glow-primary data-[state=active]:bg-primary/10 transition-all duration-200">Tokens</TabsTrigger>
+            <TabsTrigger value="logs" className="data-[state=active]:shadow-glow-primary data-[state=active]:bg-primary/10 transition-all duration-200">Request Logs</TabsTrigger>
           </TabsList>
 
           {/* Provider Setup Tab */}
@@ -699,7 +702,7 @@ const OIDCTestInterface: React.FC = () => {
                     <Button 
                       onClick={fetchDiscoveryDocument}
                       disabled={loading.discovery}
-                      className="min-w-[120px]"
+                      className="min-w-[120px] btn-glow bg-primary hover:bg-primary/90"
                     >
                       {loading.discovery ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -726,7 +729,7 @@ const OIDCTestInterface: React.FC = () => {
                       <div>
                         <Label className="text-sm font-medium">Authorization Endpoint</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <code className="text-xs bg-code-bg p-2 rounded border border-code-border flex-1 truncate">
+                          <code className="text-xs bg-code-bg p-2 rounded border border-code-border flex-1 truncate code-block">
                             {discovery.authorization_endpoint}
                           </code>
                           <Button 
@@ -742,7 +745,7 @@ const OIDCTestInterface: React.FC = () => {
                       <div>
                         <Label className="text-sm font-medium">Token Endpoint</Label>
                         <div className="flex items-center gap-2 mt-1">
-                          <code className="text-xs bg-code-bg p-2 rounded border border-code-border flex-1 truncate">
+                          <code className="text-xs bg-code-bg p-2 rounded border border-code-border flex-1 truncate code-block">
                             {discovery.token_endpoint}
                           </code>
                           <Button 
@@ -761,7 +764,7 @@ const OIDCTestInterface: React.FC = () => {
                         <Label className="text-sm font-medium">Supported Scopes</Label>
                         <div className="flex flex-wrap gap-1 mt-2">
                           {discovery.scopes_supported.map(scope => (
-                            <Badge key={scope} variant="secondary" className="text-xs">
+                            <Badge key={scope} variant="secondary" className="text-xs badge-glow hover:bg-secondary/80">
                               {scope}
                             </Badge>
                           ))}
@@ -981,13 +984,13 @@ const OIDCTestInterface: React.FC = () => {
                 )}
 
                 <div className="flex gap-2 pt-4">
-                  <Button onClick={generateAuthUrl} variant="outline">
+                  <Button onClick={generateAuthUrl} variant="outline" className="hover:border-primary/50 hover:bg-primary/5 transition-all duration-200">
                     Generate URL
                   </Button>
                    <Button 
                      onClick={beginFlow}
                      disabled={(!discovery && !config.useManualConfig) || !config.clientId}
-                     className="flex-1"
+                     className="flex-1 btn-glow bg-primary hover:bg-primary/90"
                    >
                     <Play className="h-4 w-4 mr-2" />
                     Begin Flow
@@ -1133,17 +1136,19 @@ const OIDCTestInterface: React.FC = () => {
                       return (
                         <div 
                           key={log.id} 
-                          className={`border rounded p-4 space-y-2 ${
+                          className={`border rounded-lg p-4 space-y-2 transition-all duration-200 hover:-translate-y-0.5 ${
                             isRedirect 
-                              ? 'border-amber-500/50 bg-amber-500/5' 
-                              : 'border-border'
+                              ? 'log-warning border-warning/30 bg-warning/5' 
+                              : log.response?.status && log.response.status >= 400
+                                ? 'log-error border-destructive/30 bg-destructive/5'
+                                : 'log-success border-success/30 bg-success/5'
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Badge 
                                 variant={log.response?.status && log.response.status < 400 ? "default" : "destructive"}
-                                className={isRedirect ? 'bg-amber-600 hover:bg-amber-700' : ''}
+                                className={`badge-glow ${isRedirect ? 'bg-warning text-warning-foreground hover:bg-warning/90' : ''}`}
                               >
                                 {log.method}
                               </Badge>

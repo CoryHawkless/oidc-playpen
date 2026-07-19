@@ -1,73 +1,52 @@
-# Welcome to your Lovable project
+# OIDC Test
 
-## Project info
+A browser-based OpenID Connect provider testing tool. Configure an OIDC provider, run auth flows (Authorization Code + PKCE, Implicit, Hybrid, Client Credentials), inspect tokens, fetch userinfo, and review full request/response logs.
 
-**URL**: https://lovable.dev/projects/0dbac455-8456-4d7b-8a66-6a7555f82709
+## Stack
 
-## How can I edit this code?
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS + shadcn/ui
+- React Router
+- lucide-react
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/0dbac455-8456-4d7b-8a66-6a7555f82709) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Running with Docker (recommended)
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+docker compose up --build
 ```
 
-**Edit a file directly in GitHub**
+Server starts at `http://localhost:5885`. Edit source files locally -- Vite HMR auto-reloads the browser.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+To stop:
 
-**Use GitHub Codespaces**
+```sh
+docker compose down
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Running locally (without Docker)
 
-## What technologies are used for this project?
+Requires [Bun](https://bun.sh):
 
-This project is built with:
+```sh
+bun install
+bun run dev
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Scripts
 
-## How can I deploy this project?
+| Command | Description |
+|---|---|
+| `bun run dev` | Start dev server (port 5885) |
+| `bun run build` | Production build to `dist/` |
+| `bun run build:dev` | Development build |
+| `bun run preview` | Preview production build |
+| `bun run lint` | Run ESLint |
 
-Simply open [Lovable](https://lovable.dev/projects/0dbac455-8456-4d7b-8a66-6a7555f82709) and click on Share -> Publish.
+## Features
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- **Provider Discovery** -- Fetches `.well-known/openid-configuration` automatically, with manual endpoint override for CORS-blocked providers
+- **Auth Flows** -- Authorization Code + PKCE (recommended), Implicit, Hybrid, Client Credentials
+- **Token Inspection** -- View decoded JWT headers/payloads, copy tokens
+- **UserInfo** -- Query the userinfo endpoint with the access token
+- **Request Logs** -- Full request/response details with timing, exportable as JSON
